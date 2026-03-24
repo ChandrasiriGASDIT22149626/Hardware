@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import { useCurrency } from '../context/CurrencyContext';
 import {
   DollarSignIcon,
   ShoppingCartIcon,
@@ -29,8 +28,8 @@ import {
 } from '../data/mockData';
 
 export function Dashboard() {
-  const { currency } = useCurrency();
-  const symbol = currency === 'LKR' ? 'Rs.' : '$';
+  // PERMANENT FIX: Hardcode symbol to Rs.
+  const symbol = 'Rs.';
 
   // --- STATE MANAGEMENT ---
   const [stats, setStats] = useState({
@@ -46,11 +45,10 @@ export function Dashboard() {
   // Custom Theme Colors for the Dashboard
   const themeColors = ['#DAA520', '#464646', '#B8860B', '#808080', '#EEDC82'];
 
-  // Status Colors using the new theme
   const statusColors: Record<string, string> = {
-    paid: 'bg-[#DAA520]/10 text-[#DAA520]', // Gold
-    pending: 'bg-[#464646]/10 text-[#464646]', // Ash
-    cancelled: 'bg-red-100 text-red-700' // Kept red for errors/cancellations
+    paid: 'bg-[#DAA520]/10 text-[#DAA520]', 
+    pending: 'bg-[#464646]/10 text-[#464646]', 
+    cancelled: 'bg-red-100 text-red-700' 
   };
 
   // --- DATA FETCHING ---
@@ -62,7 +60,6 @@ export function Dashboard() {
     setLoading(true);
     const today = new Date().toISOString().split('T')[0];
 
-    // 1. Fetch Today's Revenue and Orders
     const { data: salesData } = await supabase
       .from('sales')
       .select('total_amount, status')
@@ -71,16 +68,13 @@ export function Dashboard() {
     const todayRevenue = salesData?.reduce((acc, curr) => acc + (curr.total_amount || 0), 0) || 0;
     const todayOrders = salesData?.length || 0;
 
-    // 2. Fetch Active Customers
     const { count: customerCount } = await supabase
       .from('customers')
       .select('*', { count: 'exact', head: true });
 
-    // 3. Fetch Low Stock Items (using threshold from system settings or default 10)
     const { data: products } = await supabase.from('products').select('*');
     const lowStock = products?.filter((p) => p.stock < (p.min_stock || 10)) || [];
 
-    // 4. Fetch Recent Sales
     const { data: recent } = await supabase
       .from('sales')
       .select('*')
@@ -101,7 +95,6 @@ export function Dashboard() {
   return (
     <div className="p-6 space-y-6 animate-in fade-in duration-500">
       
-      {/* Welcome Banner with Logo */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center gap-5">
         <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center border border-gray-100 shadow-sm p-1 shrink-0">
           <img 
@@ -117,7 +110,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           title="Total Revenue (Today)"
@@ -156,9 +148,7 @@ export function Dashboard() {
         />
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Sales Trend */}
         <div className="xl:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
@@ -206,7 +196,6 @@ export function Dashboard() {
           </ResponsiveContainer>
         </div>
 
-        {/* Category Breakdown */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-base font-black text-[#464646] mb-1">Sales by Category</h2>
           <p className="text-sm font-bold text-gray-400 mb-6">Current Monthly Share</p>
@@ -219,7 +208,6 @@ export function Dashboard() {
                 paddingAngle={5}
                 dataKey="value"
               >
-                {/* FIX: Moved the comment outside the map function to prevent the Babel syntax error */}
                 {categorySalesData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={themeColors[index % themeColors.length]} />
                 ))}
@@ -231,9 +219,7 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom Row */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Recent Sales */}
         <div className="xl:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-black text-[#464646]">Recent Sales</h2>
@@ -271,7 +257,6 @@ export function Dashboard() {
           </div>
         </div>
 
-        {/* Low Stock Alerts */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangleIcon className="w-5 h-5 text-red-500" />

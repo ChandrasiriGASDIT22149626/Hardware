@@ -139,10 +139,7 @@ export function Settings() {
   const handleUpdateSettings = async () => {
     setSaved(true);
     await supabase.from('system_settings').update({ 
-      currency: 'LKR', // Hardcoded to safeguard your default currency
-      tax_rate: taxRate, 
-      shop_name: shopName, 
-      low_stock_threshold: threshold
+      currency, tax_rate: taxRate, shop_name: shopName, low_stock_threshold: threshold
     }).eq('id', 1);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -225,9 +222,9 @@ export function Settings() {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Currency</label>
-                {/* Fixed the currency to LKR and disabled the dropdown */}
-                <select disabled className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none font-bold text-gray-400 bg-gray-50 cursor-not-allowed">
+                <select value={currency} onChange={e => setCurrency(e.target.value)} className="w-full px-4 py-3 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#DAA520] font-bold text-[#464646] cursor-pointer bg-white">
                   <option value="LKR">LKR (Rs.)</option>
+                  <option value="USD">USD ($)</option>
                 </select>
               </div>
               <div>
