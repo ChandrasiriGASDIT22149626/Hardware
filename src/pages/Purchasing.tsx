@@ -76,46 +76,130 @@ export function Purchasing() {
   // --- PDF PURCHASE ORDER GENERATOR ---
   const downloadPO_PDF = (order: PurchaseOrder) => {
     const doc = new jsPDF();
-    const date = new Date().toLocaleDateString();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Branding Header (Gold Theme)
+    // Theme Colors for PDF
+    const gold = [218, 165, 32];
+    const darkSilver = [70, 70, 70];
+
+    // Background shapes
+    doc.setFillColor(darkSilver[0], darkSilver[1], darkSilver[2]);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+
+    // White box for logo
+    doc.setFillColor(255, 255, 255);
+    doc.rect(pageWidth - 65, 0, 45, 55, 'F');
+
+    try {
+      // LOGO: Expanded and positioned
+      doc.addImage('/images/logo.png', 'PNG', pageWidth - 63.5, 2.5, 42, 42);
+    } catch(e) {
+      console.warn("Logo not found at /images/logo.png");
+    }
+
+    // Title text: Centered below the dark header
+    doc.setTextColor(89, 89, 89); 
     doc.setFontSize(22);
-    doc.setTextColor(218, 165, 32); 
-    doc.text("HARDWARE ERP - PURCHASE ORDER", 14, 20);
-    
+    doc.setFont('helvetica', 'bold');
+    doc.text("PURCHASE ORDER", pageWidth / 2, 56, { align: 'center' }); 
+
+    // Switch text color to white for the company details inside the dark header
+    doc.setTextColor(255, 255, 255); 
+
+    // Company Name
+    doc.setFontSize(18);
+    doc.text("MUTHUWADIGE HARDWARE", 15, 20);
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text("No: 80, Mahahunupitiya, Negombo", 15, 27);
+    doc.text("Contact: 077 076 076 7", 15, 32);
+
+    // Supplier Section
+    doc.setTextColor(50, 50, 50);
     doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`PO Number: ${order.poNumber}`, 14, 30);
-    doc.text(`Order Date: ${order.date}`, 14, 35);
-    doc.text(`Expected Delivery: ${order.dueDate}`, 14, 40);
+    doc.setFont('helvetica', 'bold');
+    doc.text("SUPPLIER:", 15, 65);
+    doc.setFont('helvetica', 'normal');
+    doc.text(order.supplierName, 15, 72);
 
-    // Supplier Info
-    doc.setFontSize(12);
-    doc.setTextColor(70, 70, 70);
-    doc.text("SUPPLIER:", 14, 55);
-    doc.setFontSize(14);
-    doc.text(order.supplierName, 14, 62);
+    // PO Details
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`PO Number:`, pageWidth - 80, 65);
+    doc.text(`Order Date:`, pageWidth - 80, 72);
+    doc.text(`Expected Date:`, pageWidth - 80, 79);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.text(order.poNumber, pageWidth - 15, 65, { align: 'right' });
+    doc.text(order.date, pageWidth - 15, 72, { align: 'right' });
+    doc.text(order.dueDate, pageWidth - 15, 79, { align: 'right' });
 
-    // Items Table
+    doc.setDrawColor(220, 220, 220);
+    doc.line(15, 85, pageWidth - 15, 85);
+
+    // Table
     autoTable(doc, {
-      startY: 70,
-      head: [['Item Name', 'Quantity', 'Unit Cost', 'Subtotal']],
+      startY: 90,
+      head: [['Item Name', 'Quantity', 'Unit Cost', 'Total']],
       body: order.items.map((i: any) => [
-        i.productName,
-        i.qty,
-        `${symbol} ${convert(i.costPrice).toLocaleString()}`,
-        `${symbol} ${convert(i.total).toLocaleString()}`
+        i.productName, 
+        i.qty, 
+        `${symbol} ${convert(i.costPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+        `${symbol} ${convert(i.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
       ]),
-      headStyles: { fillColor: [218, 165, 32] }, // Gold Table Header
-      theme: 'grid'
+      theme: 'plain',
+      headStyles: { 
+        fillColor: gold,
+        textColor: 255, 
+        fontStyle: 'bold',
+        halign: 'center'
+      },
+      bodyStyles: { textColor: 50 },
+      columnStyles: {
+        0: { halign: 'left' },
+        1: { halign: 'center' },
+        2: { halign: 'right' },
+        3: { halign: 'right' }
+      },
+      alternateRowStyles: { fillColor: [250, 250, 250] }
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
+    const summaryXText = pageWidth - 65; 
+    const summaryXValue = pageWidth - 15;
+
+    // Totals Box
+    doc.setFont('helvetica', 'bold');
+    doc.setFillColor(245, 245, 245);
+    doc.rect(summaryXText - 3, finalY, 56, 12, 'F');
+    doc.setFontSize(11);
+    doc.setTextColor(50, 50, 50);
+    doc.text("Grand Total:", summaryXText, finalY + 8);
+    doc.text(`${symbol} ${convert(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, summaryXValue, finalY + 8, { align: 'right' });
+
+    // Footer Notes
+    doc.setFontSize(9);
+    doc.setTextColor(218, 165, 32); 
+    doc.text("NOTES", 15, finalY + 5);
     
-    // Total Section
-    doc.setFontSize(16);
-    doc.setTextColor(70, 70, 70); // Ash Text
-    doc.text(`GRAND TOTAL: ${symbol} ${convert(order.total).toLocaleString()}`, 120, finalY);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont('helvetica', 'normal');
+    doc.text("Please deliver all items on or before the expected delivery date.", 15, finalY + 12);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Thank you for your partnership!", 15, finalY + 19);
+
+    // Signature Line
+    doc.setDrawColor(150, 150, 150);
+    doc.line(pageWidth - 60, finalY + 45, pageWidth - 15, finalY + 45);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(8);
+    doc.text("Authorized Signee", pageWidth - 37.5, finalY + 50, { align: 'center' });
+
+    // Bottom dark bar
+    doc.setFillColor(darkSilver[0], darkSilver[1], darkSilver[2]);
+    doc.rect(0, pageHeight - 15, pageWidth, 15, 'F');
 
     doc.save(`PurchaseOrder_${order.poNumber}.pdf`);
   };

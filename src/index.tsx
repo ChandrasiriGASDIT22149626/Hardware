@@ -1,17 +1,19 @@
 import "./index.css";
 import React from "react";
-import { createRoot } from "react-dom/client"; // Import createRoot from the 'client' path
+import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { LanguageProvider } from "./context/LanguageContext"; // <-- This imports the file we just made!
 
 const container = document.getElementById("root");
 
-// The '!' ensures TypeScript knows the root element exists
 if (container) {
   const root = createRoot(container); 
   
   root.render(
     <React.StrictMode>
-      <App />
+      <LanguageProvider> {/* <-- This wraps the app in the languages */}
+        <App />
+      </LanguageProvider>
     </React.StrictMode>
   );
 }

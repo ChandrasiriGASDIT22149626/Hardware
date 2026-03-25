@@ -31,7 +31,7 @@ export function Sales() {
   
   // PERMANENT FIX: Hardcode the symbol to Rs.
   const symbol = 'Rs.';
-  const convert = (val: number) => val; // Assuming base price is already Rs. If you need conversion from another base, use: val * exchangeRate
+  const convert = (val: number) => val; 
 
   const [tab, setTab] = useState<Tab>('new');
   const [orders, setOrders] = useState<SaleOrder[]>([]);
@@ -90,125 +90,138 @@ export function Sales() {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
 
-    // Theme Colors for PDF
-    const gold = [218, 165, 32];
-    const darkSilver = [70, 70, 70];
+  // Theme Colors for PDF
+  const gold = [218, 165, 32];
+  const darkSilver = [70, 70, 70];
 
-    doc.setFillColor(darkSilver[0], darkSilver[1], darkSilver[2]);
-    doc.rect(0, 0, pageWidth, 45, 'F');
+  // Background shapes
+  doc.setFillColor(darkSilver[0], darkSilver[1], darkSilver[2]);
+  doc.rect(0, 0, pageWidth, 45, 'F');
 
-    doc.setFillColor(gold[0], gold[1], gold[2]);
-    doc.rect(pageWidth - 65, 0, 45, 55, 'F');
+   // Set fill color to white
+  doc.setFillColor(255, 255, 255);
+  doc.rect(pageWidth - 65, 0, 45, 55, 'F');
 
-    try {
-      doc.addImage('/images/logo.png', 'PNG', 15, 7.5, 30, 30);
-    } catch(e) {
-      console.warn("Logo not found at /images/logo.png");
-    }
+  try {
+    // LOGO: Increased size from 42x42 to 44x44.
+    // Adjusted X from (pageWidth - 63.5) to (pageWidth - 64.5) to keep it centered horizontally.
+    // Adjusted Y from 2.5 to 1.5 to keep it positioned correctly vertically with the new size.
+    doc.addImage('/images/logo.png', 'PNG', pageWidth - 64.5, 1.5, 44, 44);
+  } catch(e) {
+    console.warn("Logo not found at /images/logo.png");
+  }
 
-    doc.setTextColor(255, 255, 255); 
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text("MUTHUWADIGE HARDWARE", 50, 20);
+  // INVOICE text: Centered dynamically using pageWidth / 2
+  doc.setTextColor(89, 89, 89); 
+  doc.setFontSize(20);
+  doc.setFont('helvetica', 'bold');
+  doc.text("INVOICE", pageWidth / 2, 56, { align: 'center' }); 
 
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
-    doc.text("No: 80, Mahahunupitiya, Negombo", 50, 27);
-    doc.text("Contact: 077 076 076 7", 50, 32);
+  // Switch text color to white for the company details inside the dark header
+  doc.setTextColor(255, 255, 255); 
 
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text("Invoice", pageWidth - 42.5, 30, { align: 'center' }); 
+  // Company Name
+  doc.setFontSize(23);
+  doc.text("MUTHUWADIGE HARDWARE", 25, 20);
 
-    doc.setTextColor(50, 50, 50);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text("BILL TO:", 15, 65);
-    doc.setFont('helvetica', 'normal');
-    doc.text(order.customerName, 15, 72);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text("No: 80, Mahahunupitiya, Negombo", 25, 27);
+  doc.text("Contact: 077 076 076 7", 25, 32);
 
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Invoice No:`, pageWidth - 65, 65);
-    doc.text(`Issue Date:`, pageWidth - 65, 72);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.text(order.invoiceNo, pageWidth - 15, 65, { align: 'right' });
-    doc.text(order.date, pageWidth - 15, 72, { align: 'right' });
+  // Bill To Section
+  doc.setTextColor(50, 50, 50);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text("BILL TO:", 15, 65);
+  doc.setFont('helvetica', 'normal');
+  doc.text(order.customerName, 15, 72);
 
-    doc.setDrawColor(220, 220, 220);
-    doc.line(15, 80, pageWidth - 15, 80);
+  // Invoice Details
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Invoice No:`, pageWidth - 65, 65);
+  doc.text(`Issue Date:`, pageWidth - 65, 72);
+  
+  doc.setFont('helvetica', 'normal');
+  doc.text(order.invoiceNo, pageWidth - 15, 65, { align: 'right' });
+  doc.text(order.date, pageWidth - 15, 72, { align: 'right' });
 
-    autoTable(doc, {
-      startY: 85,
-      head: [['Description', 'Qty', 'Unit Price', 'Total']],
-      body: order.items.map((i: any) => [
-        i.productName, 
-        i.qty, 
-        `${symbol} ${convert(i.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
-        `${symbol} ${convert(i.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
-      ]),
-      theme: 'plain',
-      headStyles: { 
-        fillColor: gold,
-        textColor: 255, 
-        fontStyle: 'bold',
-        halign: 'center'
-      },
-      bodyStyles: { textColor: 50 },
-      columnStyles: {
-        0: { halign: 'left' },
-        1: { halign: 'center' },
-        2: { halign: 'right' },
-        3: { halign: 'right' }
-      },
-      alternateRowStyles: { fillColor: [250, 250, 250] }
-    });
+  doc.setDrawColor(220, 220, 220);
+  doc.line(15, 80, pageWidth - 15, 80);
 
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    const summaryXText = pageWidth - 65; 
-    const summaryXValue = pageWidth - 15;
+  // Table
+  autoTable(doc, {
+    startY: 85,
+    head: [['Description', 'Qty', 'Unit Price', 'Total']],
+    body: order.items.map((i) => [
+      i.productName, 
+      i.qty, 
+      `${symbol} ${convert(i.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+      `${symbol} ${convert(i.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+    ]),
+    theme: 'plain',
+    headStyles: { 
+      fillColor: gold,
+      textColor: 255, 
+      fontStyle: 'bold',
+      halign: 'center'
+    },
+    bodyStyles: { textColor: 50 },
+    columnStyles: {
+      0: { halign: 'left' },
+      1: { halign: 'center' },
+      2: { halign: 'right' },
+      3: { halign: 'right' }
+    },
+    alternateRowStyles: { fillColor: [250, 250, 250] }
+  });
 
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    
-    doc.text("Sub Total:", summaryXText, finalY);
-    doc.text(`${symbol} ${convert(order.subtotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, summaryXValue, finalY, { align: 'right' });
+  const finalY = doc.lastAutoTable.finalY + 10;
+  const summaryXText = pageWidth - 65; 
+  const summaryXValue = pageWidth - 15;
 
-    doc.text("Discount:", summaryXText, finalY + 8);
-    doc.text(`-${symbol} ${convert(order.discount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, summaryXValue, finalY + 8, { align: 'right' });
+  // Totals
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  
+  doc.text("Sub Total:", summaryXText, finalY);
+  doc.text(`${symbol} ${convert(order.subtotal || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, summaryXValue, finalY, { align: 'right' });
 
-    doc.text(`Tax (${order.tax_rate || 0}%):`, summaryXText, finalY + 16);
-    doc.text(`+${symbol} ${convert(order.tax || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, summaryXValue, finalY + 16, { align: 'right' });
+  doc.text("Discount:", summaryXText, finalY + 8);
+  doc.text(`-${symbol} ${convert(order.discount || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, summaryXValue, finalY + 8, { align: 'right' });
 
-    doc.setFillColor(245, 245, 245);
-    doc.rect(summaryXText - 3, finalY + 22, 56, 12, 'F');
-    doc.setFontSize(11);
-    doc.text("Total Due:", summaryXText, finalY + 30);
-    doc.text(`${symbol} ${convert(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, summaryXValue, finalY + 30, { align: 'right' });
+  doc.text(`Tax (${order.tax_rate || 0}%):`, summaryXText, finalY + 16);
+  doc.text(`+${symbol} ${convert(order.tax || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, summaryXValue, finalY + 16, { align: 'right' });
 
-    doc.setFontSize(9);
-    doc.setTextColor(218, 165, 32); 
-    doc.text("NOTES", 15, finalY + 15);
-    
-    doc.setTextColor(100, 100, 100);
-    doc.setFont('helvetica', 'normal');
-    doc.text("Please feel free to contact us in case of any questions.", 15, finalY + 22);
-    doc.setFont('helvetica', 'bold');
-    doc.text("Thank you for your business!", 15, finalY + 29);
+  doc.setFillColor(245, 245, 245);
+  doc.rect(summaryXText - 3, finalY + 22, 56, 12, 'F');
+  doc.setFontSize(11);
+  doc.text("Total Due:", summaryXText, finalY + 30);
+  doc.text(`${symbol} ${convert(order.total).toLocaleString(undefined, { minimumFractionDigits: 2 })}`, summaryXValue, finalY + 30, { align: 'right' });
 
-    doc.setDrawColor(150, 150, 150);
-    doc.line(pageWidth - 60, finalY + 55, pageWidth - 15, finalY + 55);
-    doc.setFont('helvetica', 'italic');
-    doc.setFontSize(8);
-    doc.text("Authorized Signee", pageWidth - 37.5, finalY + 60, { align: 'center' });
+  // Footer
+  doc.setFontSize(9);
+  doc.setTextColor(218, 165, 32); 
+  doc.text("NOTES", 15, finalY + 15);
+  
+  doc.setTextColor(100, 100, 100);
+  doc.setFont('helvetica', 'normal');
+  doc.text("Please feel free to contact us in case of any questions.", 15, finalY + 22);
+  doc.setFont('helvetica', 'bold');
+  doc.text("Thank you for your business!", 15, finalY + 29);
 
-    doc.setFillColor(darkSilver[0], darkSilver[1], darkSilver[2]);
-    doc.rect(0, pageHeight - 15, pageWidth, 15, 'F');
+  doc.setDrawColor(150, 150, 150);
+  doc.line(pageWidth - 60, finalY + 55, pageWidth - 15, finalY + 55);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  doc.text("Authorized Signee", pageWidth - 37.5, finalY + 60, { align: 'center' });
 
-    doc.save(`Invoice_${order.invoiceNo}.pdf`);
-  };
+  doc.setFillColor(darkSilver[0], darkSilver[1], darkSilver[2]);
+  doc.rect(0, pageHeight - 15, pageWidth, 15, 'F');
 
+  doc.save(`Invoice_${order.invoiceNo}.pdf`);
+};
   const filteredProducts = products.filter(
     (p) =>
       (p.name.toLowerCase().includes(productSearch.toLowerCase()) || 
